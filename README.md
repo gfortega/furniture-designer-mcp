@@ -19,6 +19,12 @@ Los perfiles se guardan en `./supplier_profiles` por defecto. Campos obligatorio
 `name`, `sheet_width_mm`, `sheet_height_mm`, `thickness_mm`, `blade_kerf_mm`,
 `grain_direction` (`auto`, `length` o `none`). Las medidas son milímetros.
 
+Para ejecutar también la prueba MCP entre procesos, después de instalar las
+dependencias, configurar `FURNITURE_TEST_STDIO=1` y `FURNITURE_MCP_COMMAND` con
+la ruta absoluta al ejecutable `furniture-designer-mcp`; luego ejecutar
+`python -m unittest discover -s tests -v`. Esta prueba necesita un entorno que
+permita comunicación por las tuberías estándar entre procesos.
+
 **Servidor MCP para diseño profesional de muebles**
 
 [![PyPI](https://img.shields.io/pypi/v/furniture-designer-mcp?label=PyPI&color=blue)](https://pypi.org/project/furniture-designer-mcp/)
