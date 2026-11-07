@@ -19,6 +19,7 @@ def optimize_cuts(
     sheet_height: float = 1220,
     blade_kerf: float = 3,
     grain_direction: str = "auto",
+    sort_order: str = "max_dimension",
 ) -> dict:
     """Optimize panel cuts on standard sheets.
 
@@ -72,7 +73,15 @@ def optimize_cuts(
     grain_warnings = _pre_validate_pieces(pieces, sheet_width, sheet_height)
 
     # Sort by largest dimension descending (BHFD heuristic)
-    pieces.sort(key=lambda p: max(p["width"], p["height"]), reverse=True)
+    orders = {
+        "max_dimension": lambda p: max(p["width"], p["height"]),
+        "area": lambda p: p["width"] * p["height"],
+        "height": lambda p: p["height"],
+        "width": lambda p: p["width"],
+    }
+    if sort_order not in orders:
+        raise ValueError("Unknown sort_order")
+    pieces.sort(key=orders[sort_order], reverse=True)
 
     sheets: list[dict] = []
 
@@ -148,6 +157,22 @@ def optimize_cuts(
             sheet_data["pieces"].append(piece_data)
         result["sheets"].append(sheet_data)
 
+    return result
+
+
+def optimize_cuts_best(parts, **settings):
+    """Try several shelf orders; never claim a globally optimal solution."""
+    candidates = []
+    for order in ("max_dimension", "area", "height", "width"):
+        result = optimize_cuts(parts, sort_order=order, **settings)
+        if "error" not in result:
+            candidates.append((result["sheets_needed"], order, result))
+    if not candidates:
+        return optimize_cuts(parts, **settings)
+    # Prefer the existing order when sheet counts are tied.
+    _, order, result = min(candidates, key=lambda candidate: candidate[0])
+    result["optimization"] = {"strategy": order, "strategies_tried": 4,
+                              "guarantees_global_optimum": False}
     return result
 
 

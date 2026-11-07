@@ -20,7 +20,7 @@ from .knowledge.brief_formatters import (
     brief_assembly_specs,
 )
 from .engine.designer import generate_furniture_spec
-from .engine.cut_optimizer import optimize_cuts as _optimize_cuts
+from .engine.cut_optimizer import optimize_cuts as _optimize_cuts, optimize_cuts_best as _optimize_cuts_best
 from .engine.structural_validator import validate_structure as _validate
 from .engine.bom_generator import generate_bom as _generate_bom
 from .engine.spec_validator import validate_spec, validate_cut_parts
@@ -36,6 +36,8 @@ from .engine.freecad_client import get_client as _get_freecad_client
 from .engine.report_generator import generate_design_report as _generate_report
 from .engine.spec_builder import build_spec_from_layout as _build_spec
 from .engine.section_mapper import map_sections as _map_sections, resolve_reference as _resolve_section
+from .engine.supplier_profiles import save_profile as _save_profile, load_profile as _load_profile
+from .engine.supplier_export import export_cutlist_csv as _export_cutlist_csv, export_cutlist_xlsx as _export_cutlist_xlsx
 
 logger = logging.getLogger(__name__)
 
@@ -401,6 +403,48 @@ def validate_structure(ctx: Context, spec: dict) -> list[TextContent]:
 
 
 @mcp.tool()
+def save_supplier_profile(ctx: Context, profile_id: str, profile: dict, directory: str = "./supplier_profiles") -> list[TextContent]:
+    """Save supplier sheet dimensions, thickness, kerf and grain in millimetres.
+
+    Required profile keys: name, sheet_width_mm, sheet_height_mm, thickness_mm,
+    blade_kerf_mm and grain_direction (auto, length, or none). Existing IDs are replaced.
+    """
+    try:
+        path = _save_profile(directory, profile_id, profile)
+        return [TextContent(type="text", text=f"Perfil guardado: {path}")]
+    except (ValueError, OSError) as e:
+        return [TextContent(type="text", text=f"Error de perfil: {e}")]
+
+
+@mcp.tool()
+def optimize_with_profile(ctx: Context, parts: list[dict], profile_id: str, directory: str = "./supplier_profiles") -> list[TextContent]:
+    """Calculate a layout with saved supplier settings; review all warnings before cutting.
+
+    The profile applies to one material and thickness. The optimizer may relax grain
+    constraints and reports a warning; such layouts must not be used without review.
+    """
+    try:
+        profile = _load_profile(directory, profile_id)
+        parts = [dict(part) for part in parts]
+        err, conversions = _cut_parts_error_response(parts)
+        if err:
+            return err
+        for part in parts:
+            thickness = part.get("thickness")
+            if thickness is not None and thickness != profile["thickness_mm"]:
+                raise ValueError(f"Piece {part.get('id')} does not match profile thickness")
+        result = _optimize_cuts_best(parts, sheet_width=profile["sheet_width_mm"],
+                                sheet_height=profile["sheet_height_mm"],
+                                blade_kerf=profile["blade_kerf_mm"],
+                                grain_direction=profile["grain_direction"])
+        result.setdefault("warnings", []).extend(conversions)
+        result["profile"] = profile
+        return [TextContent(type="text", text=json.dumps(result, ensure_ascii=False))]
+    except (ValueError, OSError, json.JSONDecodeError) as e:
+        return [TextContent(type="text", text=f"Error de perfil: {e}")]
+
+
+@mcp.tool()
 def optimize_cuts(
     ctx: Context,
     parts: list[dict],
@@ -466,6 +510,30 @@ def optimize_cuts(
 # ---------------------------------------------------------------------------
 # BOM tools
 # ---------------------------------------------------------------------------
+
+
+@mcp.tool()
+def export_supplier_xlsx(ctx: Context, spec: dict, destination: str) -> list[TextContent]:
+    """Export a draft cut list as an Excel workbook; review it before cutting."""
+    if err := _spec_error_response(spec):
+        return err
+    try:
+        path = _export_cutlist_xlsx(spec, destination)
+        return [TextContent(type="text", text=f"Despiece provisional guardado: {path}")]
+    except (ValueError, OSError) as e:
+        return [TextContent(type="text", text=f"Error al exportar: {e}")]
+
+
+@mcp.tool()
+def export_supplier_csv(ctx: Context, spec: dict, destination: str) -> list[TextContent]:
+    """Export a draft cut list as UTF-8 CSV for Excel; review it before cutting."""
+    if err := _spec_error_response(spec):
+        return err
+    try:
+        path = _export_cutlist_csv(spec, destination)
+        return [TextContent(type="text", text=f"Despiece provisional guardado: {path}")]
+    except (ValueError, OSError) as e:
+        return [TextContent(type="text", text=f"Error al exportar: {e}")]
 
 
 @mcp.tool()

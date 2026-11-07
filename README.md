@@ -2,6 +2,23 @@
 
 # furniture-designer-mcp
 
+### Prototipo: perfiles y despiece para proveedor
+
+Las herramientas MCP `save_supplier_profile` y `optimize_with_profile` guardan y
+aplican medidas de tablero, espesor, sierra y veta. El cálculo prueba cuatro
+órdenes de colocación y escoge el que usa menos placas; no garantiza el óptimo
+global. Las advertencias de veta deben revisarse. Un perfil corresponde a un
+solo espesor; se deben calcular materiales y espesores por separado.
+
+`export_supplier_csv` y `export_supplier_xlsx` producen listados de piezas para
+revisión. Son borradores: no incorporan automáticamente márgenes de escuadrado
+ni compensación de tapacantos y no sustituyen el formato o las reglas del
+proveedor. La exportación todavía no incluye el diagrama de cortes.
+
+Los perfiles se guardan en `./supplier_profiles` por defecto. Campos obligatorios:
+`name`, `sheet_width_mm`, `sheet_height_mm`, `thickness_mm`, `blade_kerf_mm`,
+`grain_direction` (`auto`, `length` o `none`). Las medidas son milímetros.
+
 **Servidor MCP para diseño profesional de muebles**
 
 [![PyPI](https://img.shields.io/pypi/v/furniture-designer-mcp?label=PyPI&color=blue)](https://pypi.org/project/furniture-designer-mcp/)

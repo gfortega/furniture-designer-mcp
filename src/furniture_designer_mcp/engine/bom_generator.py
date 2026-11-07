@@ -25,8 +25,9 @@ def generate_bom(spec: dict) -> dict:
             "width_mm": p["width_mm"],
             "height_mm": p["height_mm"],
             "thickness_mm": p["thickness_mm"],
-            "material": "mdf_3" if p["role"] in ("back", "drawer_bottom") else material,
+            "material": p.get("material", "mdf_3" if p["role"] in ("back", "drawer_bottom") else material),
             "edge_banding": p.get("edge_banding", []),
+            "grain": p.get("grain"),
             "qty": 1,
         }
         if p["role"] in ("back", "drawer_bottom"):
@@ -82,10 +83,11 @@ def generate_bom(spec: dict) -> dict:
 
 
 def _group_identical(panels: list[dict]) -> list[dict]:
-    """Group panels with identical dimensions."""
-    groups: dict[str, dict] = {}
+    """Group only panels with the same manufacturing requirements."""
+    groups: dict[tuple, dict] = {}
     for p in panels:
-        key = f"{p['width_mm']}x{p['height_mm']}x{p['thickness_mm']}"
+        key = (p["width_mm"], p["height_mm"], p["thickness_mm"],
+               p["material"], p.get("grain"), tuple(sorted(p.get("edge_banding", []))))
         if key in groups:
             groups[key]["qty"] += 1
             groups[key]["ids"].append(p["id"])
