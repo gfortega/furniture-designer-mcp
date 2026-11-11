@@ -1,11 +1,14 @@
 # Fase 1: diseño y preparación de cortes
 
-Actualizado: 11 de noviembre de 2026. Estado: en desarrollo; los resultados
-son borradores hasta su revisión por el taller y el proveedor.
+Actualizado: 11 de noviembre de 2026. Estado: **cerrada como fase de prueba
+del software**, por decisión del usuario. La prueba real del taller, la revisión
+constructiva y la propuesta al proyecto original pasan a la fase 2; los diseños
+siguen siendo borradores hasta su revisión para fabricación.
 
 ## Situación actual
 
-La implementación está preparada para una prueba en vivo con el usuario. La
+Se realizó una prueba en vivo con el usuario: el escritorio se actualizó a
+180 × 200 cm y se generaron el modelo, el Excel y el diagrama. La
 configuración genérica utiliza provisionalmente tablero
 2600 × 1830 × 18 mm, sierra de 3,2 mm, margen de 5 mm por borde y canto de
 1 mm en los bordes seleccionados; sin restricción de veta. Son supuestos, no
@@ -65,8 +68,8 @@ bloquean la prueba de software: se confirmarán en la etapa de taller.
   y distintos tamaños de placa; se rechazan cambios automáticos de veta.
 - [x] Generar una secuencia guillotina numerada y verificar geométricamente las
   regiones, el ancho de sierra y que las piezas no sean atravesadas por los cortes.
-- [ ] Confirmar con el proveedor que la secuencia es realizable por su máquina;
-  la comprobación geométrica no sustituye esa revisión operativa.
+- [ ] **Trasladado a fase 2:** confirmar con el proveedor que la secuencia es
+  realizable por su máquina; la comprobación geométrica no sustituye esa revisión.
 
 ## 5. Prueba integral del escritorio
 
@@ -74,26 +77,26 @@ bloquean la prueba de software: se confirmarán en la etapa de taller.
   mediante MCP; el usuario aprobó la visualización del informe 3D como prueba.
 - [x] Se repitió el flujo mediante MCP con el perfil genérico, un ejemplo de
   descuento de canto y la secuencia; generó informe 3D, Excel y SVG.
-- [ ] Revisar en vivo con el usuario las salidas y un cambio de medida solicitado
-  durante la sesión, no solamente los archivos generados para la demostración.
+- [x] El usuario realizó la prueba de cambio a 180 × 200 cm en otra charla;
+  existen el modelo y los documentos generados en `../evaluacion-furniture-designer/escritorio-180/`.
 
-## 6. Prueba real del taller
+## 6. Prueba real del taller — trasladada a fase 2
 
 - [ ] Confirmar con un proveedor formato de pedido, placas, sierra, márgenes,
   veta, cantos y criterios de corte.
 - [ ] Revisar medidas en sitio, espesor real, herrajes, uniones y estabilidad;
   contrastar documentos con el proveedor antes de fabricar.
 
-## 7. Contribución al proyecto original
+## 7. Contribución al proyecto original — trasladada a fase 2
 
 - [ ] Revisar el alcance, preparar documentación y pruebas y proponer los
   cambios al proyecto original mediante un pull request. Mantener el fork propio
   independientemente de la decisión del proyecto original.
 
-## Después de la fase 1
+## Fase 2: prioridad alta
 
-Evaluar imágenes como entrada para proponer diseños 3D mediante IA y MCP. Las
-dimensiones y decisiones constructivas deberán confirmarse antes del despiece.
+Implementar la conversión asistida de imágenes a diseños 3D mediante IA y MCP,
+con generación de documentos. Ver `ROADMAP-FASE-2.md`.
 
 ## Instalación de esta máquina
 
