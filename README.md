@@ -19,6 +19,14 @@ Los perfiles se guardan en `./supplier_profiles` por defecto. Campos obligatorio
 `name`, `sheet_width_mm`, `sheet_height_mm`, `thickness_mm`, `blade_kerf_mm`,
 `grain_direction` (`auto`, `length` o `none`). Las medidas son milímetros.
 
+`design_l_desk` crea un boceto paramétrico de cinco paneles para un escritorio
+en L. Recibe en centímetros `width` y `depth` (medidas desde la esquina),
+`height`, `worktop_depth` y opcionalmente `material` (`melamine_16` o
+`melamine_18`). Volver a llamarlo con nuevas medidas regenera las piezas; el
+resultado se puede pasar a `update_design_report` para visualizar iteraciones.
+El apoyo de esquina, las uniones, los refuerzos y la estabilidad son provisionales
+y necesitan revisión; no es un diseño listo para fabricar.
+
 Para ejecutar también la prueba MCP entre procesos, después de instalar las
 dependencias, configurar `FURNITURE_TEST_STDIO=1` y `FURNITURE_MCP_COMMAND` con
 la ruta absoluta al ejecutable `furniture-designer-mcp`; luego ejecutar

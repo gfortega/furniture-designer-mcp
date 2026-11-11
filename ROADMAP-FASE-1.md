@@ -9,17 +9,21 @@ son borradores hasta su revisión por el taller y el proveedor.
 - [x] Registrar `furniture-designer` como servidor MCP de Codex en WSL.
 - [x] Probar el ejecutable instalado con un cliente MCP en otro proceso: ocho
   pruebas aprobadas, incluido el despiece provisional del escritorio.
-- [ ] Confirmar que las herramientas aparecen y responden desde una sesión de
-  Codex que cargue la configuración nueva. El aislamiento de este entorno
+- [x] El usuario confirmó que las herramientas responden desde otra sesión de
+  Codex que cargó la configuración nueva. El aislamiento de este entorno
   bloqueó anteriormente una prueba entre procesos; fuera de él funcionó.
 - [ ] Documentar y comprobar una instalación reproducible en otra máquina.
 
 ## 2. Diseño y edición
 
-- [ ] Evaluar cómo crear, visualizar y modificar un escritorio en L, incluyendo
-  soporte, dimensiones y uniones. Hasta ahora se probó una lista de piezas;
-  no se ha verificado la edición de un modelo 3D en L.
-- [ ] Implementar o integrar lo que falte y probar la actualización del despiece.
+- [x] Crear una plantilla MCP para un escritorio en L provisional y regenerar
+  la geometría y el despiece al cambiar sus medidas. Se verificaron dimensiones,
+  ausencia de solapamientos entre cajas y consistencia de las orientaciones del
+  informe y de FreeCAD, y se generó un informe con dos iteraciones.
+- [ ] Comprobar visualmente el informe 3D en un navegador y revisar con el
+  usuario la posición de los apoyos. La interfaz existente visualiza el modelo;
+  cambiar medidas se hace regenerándolo mediante MCP, no arrastrando piezas.
+- [ ] Definir y validar soportes, refuerzos, anclajes y uniones antes de fabricar.
 
 ## 3. Entrega al proveedor
 

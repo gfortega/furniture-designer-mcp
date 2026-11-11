@@ -19,7 +19,7 @@ from .knowledge.brief_formatters import (
     brief_hardware_category,
     brief_assembly_specs,
 )
-from .engine.designer import generate_furniture_spec
+from .engine.designer import generate_furniture_spec, generate_l_desk_spec
 from .engine.cut_optimizer import optimize_cuts as _optimize_cuts, optimize_cuts_best as _optimize_cuts_best
 from .engine.structural_validator import validate_structure as _validate
 from .engine.bom_generator import generate_bom as _generate_bom
@@ -310,6 +310,23 @@ def get_assembly_specs(ctx: Context, topic: str | None = None, brief: bool = Fal
 # ---------------------------------------------------------------------------
 # Design tools
 # ---------------------------------------------------------------------------
+
+
+@mcp.tool()
+def design_l_desk(ctx: Context, width: float, depth: float, height: float,
+                  worktop_depth: float, material: str = "melamine_18") -> list[TextContent]:
+    """Generate a provisional L desk. All input dimensions are in centimeters.
+
+    width and depth measure the two arms from the corner. worktop_depth is
+    the depth of both work surfaces. Re-run with changed dimensions to rebuild
+    the panels. This is not a verified structural or joinery design.
+    """
+    try:
+        return [TextContent(type="text", text=json.dumps(
+            generate_l_desk_spec(width, depth, height, worktop_depth, material),
+            ensure_ascii=False))]
+    except ValueError as e:
+        return [TextContent(type="text", text=f"Error al diseñar: {e}")]
 
 
 @mcp.tool()

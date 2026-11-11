@@ -6,6 +6,8 @@ a complete JSON spec with all parts, positions, hardware, and notes.
 
 from __future__ import annotations
 
+import math
+
 from ..knowledge.ergonomics import ERGONOMIC_STANDARDS
 from ..knowledge.materials import MATERIALS
 from ..knowledge.structural_rules import STRUCTURAL_RULES
@@ -14,6 +16,50 @@ from .section_mapper import map_sections
 # Safety limits for quantities
 MAX_SHELVES = 20
 MAX_DRAWERS = 10
+
+
+def generate_l_desk_spec(width: float, depth: float, height: float,
+                         worktop_depth: float, material: str = "melamine_18") -> dict:
+    """Create a provisional L desk from five panels; input in cm, output in mm.
+
+    X is the principal arm, Y the return arm, Z height. This geometry is a
+    design aid, not an engineered support or joint specification.
+    """
+    values = (width, depth, height, worktop_depth)
+    if any(isinstance(v, bool) or not isinstance(v, (int, float)) or
+           not math.isfinite(v) or v <= 0 for v in values):
+        raise ValueError("Las medidas deben ser números positivos y finitos, en centímetros.")
+    mat = MATERIALS.get(material)
+    if material not in ("melamine_16", "melamine_18") or mat is None:
+        raise ValueError("La plantilla admite melamine_16 o melamine_18.")
+    W, D, H, d = (v * 10 for v in values)
+    t = mat["thickness_mm"]
+    if W <= d + t or D <= d + t or H <= t or d <= 100:
+        raise ValueError("Los brazos deben superar la profundidad de tapa y el espesor; revise la altura.")
+    support_h = H - t
+    parts = [
+        _panel("tapa_principal", "top_panel", W, d, t, pos=[0, 0, support_h]),
+        _panel("tapa_lateral", "top_panel", d, D - d, t, pos=[0, d, support_h]),
+        _panel("apoyo_extremo_principal", "side", d, support_h, t, pos=[W - t, 0, 0]),
+        _panel("apoyo_extremo_lateral", "back_rail", d, support_h, t, pos=[0, D - t, 0]),
+        _panel("apoyo_interior", "back_rail", d - 100, support_h, t, pos=[0, d - t, 0]),
+    ]
+    # These are conceptual panels: do not imply an unconfirmed edging decision.
+    for part in parts:
+        part.pop("edge_banding", None)
+    return {
+        "furniture_type": "desk_l",
+        "dimensions_cm": {"width": width, "height": height, "depth": depth},
+        "dimensions_mm": {"width": W, "height": H, "depth": D},
+        "worktop_depth_mm": d,
+        "material": material,
+        "material_thickness_mm": t,
+        "parts": parts,
+        "hardware": [],
+        "notes": ["BOCETO PROVISIONAL: no fabricar sin revisar diseño y dimensiones.",
+                  "Uniones, refuerzos, rigidez, flecha, anclajes y tapacantos pendientes.",
+                  "El apoyo interior puede interferir con las piernas; evaluar alternativas."],
+    }
 
 
 def _clamp_quantities(opts: dict, notes: list[str]) -> dict:

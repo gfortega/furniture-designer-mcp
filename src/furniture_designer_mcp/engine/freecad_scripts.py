@@ -122,7 +122,7 @@ def _box_dims(part: dict) -> tuple[float, float, float]:
     elif role == "drawer_bottom":
         # Horizontal panel (like shelf but for drawer)
         return (w, h, t)
-    elif role in ("rail",):
+    elif role in ("rail", "back_rail"):
         # Horizontal beam
         # wide in X, thin in Y, height in Z
         return (w, t, h)
