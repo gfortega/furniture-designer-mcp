@@ -103,6 +103,48 @@ def build_supplier_package(spec: dict, destination: str, profile_id: str = "gene
             "template": template, "status": "BORRADOR - REVISAR"}
 
 
+def _cut_label_positions(sheet: dict, cuts: list[dict], width: float, height: float, font: float):
+    """Place numbered chips on cut lines, avoiding other chips and piece labels.
+
+    If a congested region cannot fit a chip, move it to a separate legend.
+    Coordinates are relative to the sheet, not to the entire SVG.
+    """
+    chip_h = font * 1.3
+    occupied = []
+    for part in sheet["pieces"]:
+        text_width = min(width, max(font, len(str(part["id"])) * font * 0.64))
+        cx = part["x"] + part["width"] / 2
+        cy = part["y"] + part["height"] / 2
+        occupied.append((cx-text_width/2, cy-font, cx+text_width/2, cy+font*0.35))
+
+    placed, overflow = {}, []
+    ordered = sorted(cuts, key=lambda cut: cut["region_antes_mm"][3 if cut["eje"] == "x" else 2])
+    fractions = [0.5, 0.25, 0.75, 0.125, 0.875, 0.375, 0.625,
+                 0.0625, 0.9375, 0.1875, 0.3125, 0.4375, 0.5625, 0.6875, 0.8125]
+    for cut in ordered:
+        x, y, w, h = cut["region_antes_mm"]
+        center = cut["trayecto_centro_mm"]
+        chip_w = max(font * 1.25, font * (0.72 * len(str(cut["numero"])) + 0.5))
+        chosen = None
+        for fraction in fractions:
+            cx = center if cut["eje"] == "x" else x + w * fraction
+            cy = y + h * fraction if cut["eje"] == "x" else center
+            cx = max(chip_w/2, min(width-chip_w/2, cx))
+            cy = max(chip_h/2, min(height-chip_h/2, cy))
+            box = (cx-chip_w/2, cy-chip_h/2, cx+chip_w/2, cy+chip_h/2)
+            if all(box[2] + font*0.12 <= b[0] or b[2] + font*0.12 <= box[0] or
+                   box[3] + font*0.12 <= b[1] or b[3] + font*0.12 <= box[1]
+                   for b in occupied):
+                chosen = box
+                break
+        if chosen is None:
+            overflow.append((cut, chip_w))
+        else:
+            placed[cut["numero"]] = chosen
+            occupied.append(chosen)
+    return placed, overflow
+
+
 def _svg(result: dict) -> str:
     width = result["sheet_size_mm"]["width"]
     height = result["sheet_size_mm"]["height"]
@@ -110,10 +152,19 @@ def _svg(result: dict) -> str:
     gap = 180
     size = max(width, height)
     font = max(20, min(55, size / 55))
-    svg = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {(height + gap) * len(sheets)}">']
+    placements = []
+    for sheet in sheets:
+        sequence = next(plan for plan in result["cut_sequence"] if plan["sheet_number"] == sheet["sheet_number"])
+        labels, overflow = _cut_label_positions(sheet, sequence["cuts"], width, height, font)
+        placements.append((sequence, labels, overflow))
+    overflow_widths = [chip_w for _, _, overflow in placements for _, chip_w in overflow]
+    side_width = max(7 * font, max(overflow_widths, default=0) + 2 * font) if overflow_widths else 0
+    block_heights = [max(height, len(item[2]) * font * 1.8) for item in placements]
+    svg_height = sum(block + gap for block in block_heights)
+    svg = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width + side_width} {svg_height}">']
     svg.append('<style>text{font-family:sans-serif;fill:#202020}</style>')
+    y_offset = gap
     for index, sheet in enumerate(sheets):
-        y_offset = index * (height + gap) + gap
         svg.append(f'<text x="10" y="{y_offset - 35}" font-size="{font}">BORRADOR — Placa {sheet["sheet_number"]} ({width} × {height} mm)</text>')
         svg.append(f'<rect x="0" y="{y_offset}" width="{width}" height="{height}" fill="#eee" stroke="#222" stroke-width="5"/>')
         for p in sheet["pieces"]:
@@ -121,7 +172,7 @@ def _svg(result: dict) -> str:
             label = html.escape(str(p["id"]))
             svg.append(f'<rect x="{x}" y="{y}" width="{w}" height="{h}" fill="#b8d8e5" stroke="#333" stroke-width="3"/>')
             svg.append(f'<text x="{x + w/2}" y="{y + h/2}" text-anchor="middle" font-size="{font}">{label}</text>')
-        sequence = next(plan for plan in result["cut_sequence"] if plan["sheet_number"] == sheet["sheet_number"])
+        sequence, labels, overflow = placements[index]
         for cut in sequence["cuts"]:
             x, y, w, h = cut["region_antes_mm"]
             center = cut["trayecto_centro_mm"]
@@ -130,6 +181,25 @@ def _svg(result: dict) -> str:
             else:
                 x1, y1, x2, y2 = x, center+y_offset, x+w, center+y_offset
             svg.append(f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="#c62828" stroke-width="5"/>')
-            svg.append(f'<text x="{x1+8}" y="{y1+font}" font-size="{font}" fill="#c62828">{cut["numero"]}</text>')
+        # Draw legend connectors before all chips, so they cannot obscure numbers.
+        for i, (cut, chip_w) in enumerate(overflow):
+            cy = y_offset + font*(0.8 + i*1.8)
+            x, y, w, h = cut["region_antes_mm"]
+            center = cut["trayecto_centro_mm"]
+            anchor_x = center if cut["eje"] == "x" else x+w/2
+            anchor_y = y+h/2 if cut["eje"] == "x" else center
+            svg.append(f'<line x1="{anchor_x}" y1="{anchor_y+y_offset}" x2="{width+font}" y2="{cy}" stroke="#b42318" stroke-width="2" stroke-dasharray="12 8"/>')
+        # Draw labels after all cut lines so the white chips remain legible.
+        for cut in sequence["cuts"]:
+            number = cut["numero"]
+            if number not in labels:
+                continue
+            left, top, right, bottom = labels[number]
+            svg.append(f'<g class="cut-label" data-cut="{number}"><rect x="{left}" y="{top+y_offset}" width="{right-left}" height="{bottom-top}" rx="{font*0.18}" fill="white" stroke="#b42318" stroke-width="2"/><text x="{(left+right)/2}" y="{(top+bottom)/2+y_offset}" dominant-baseline="central" text-anchor="middle" font-size="{font}">{number}</text></g>')
+        for i, (cut, chip_w) in enumerate(overflow):
+            cy = y_offset + font*(0.8 + i*1.8)
+            cx = width + font + chip_w/2
+            svg.append(f'<g class="cut-label" data-cut="{cut["numero"]}"><rect x="{cx-chip_w/2}" y="{cy-font*0.65}" width="{chip_w}" height="{font*1.3}" rx="{font*0.18}" fill="white" stroke="#b42318" stroke-width="2"/><text x="{cx}" y="{cy}" dominant-baseline="central" text-anchor="middle" font-size="{font}">{cut["numero"]}</text></g>')
+        y_offset += block_heights[index] + gap
     svg.append('</svg>')
     return "".join(svg)
