@@ -3,6 +3,19 @@
 Actualizado: 11 de noviembre de 2026. Estado: en desarrollo; los resultados
 son borradores hasta su revisión por el taller y el proveedor.
 
+## Situación actual
+
+Estamos en la preparación de la entrega al proveedor y la validación de cortes
+(etapas 3 y 4). La configuración genérica utiliza provisionalmente tablero
+2600 × 1830 × 18 mm, sierra de 3,2 mm, margen de 5 mm por borde y canto de
+1 mm en los bordes seleccionados; sin restricción de veta. Son supuestos, no
+condiciones confirmadas de un proveedor. El taller coloca el tapacanto y se
+debe descontar su espesor antes de pedir el corte.
+
+La última verificación ejecutó 18 pruebas, incluida la exportación con descuento
+de tapacantos por MCP entre procesos. Ver archivos de ejemplo en
+`../evaluacion-furniture-designer/paso-2-escritorio-l/`.
+
 ## 1. Instalación y conexión
 
 - [x] Instalar el fork en un entorno `.venv` persistente dentro de este proyecto.
@@ -37,6 +50,8 @@ son borradores hasta su revisión por el taller y el proveedor.
   diagrama SVG calculado para el mismo conjunto de piezas y el mismo perfil.
 - [x] El paquete permite descontar el tapacanto que colocará el taller, solo en
   bordes indicados explícitamente, y muestra medidas terminadas y de corte.
+- [x] El paquete avisa si hay piezas con cantos sin definir y no aplica
+  descuentos supuestos. Una indicación vacía confirma que no llevan canto.
 - [ ] Confirmar márgenes, material, espesor real y tapacantos con el proveedor
   y el taller; los valores predeterminados son provisionales.
 - [ ] Ajustar columnas y convenciones al proveedor real y revisar el diagrama.
@@ -46,13 +61,16 @@ son borradores hasta su revisión por el taller y el proveedor.
 - [x] Prototipo: comparar cuatro órdenes de colocación. No garantiza el óptimo.
 - [ ] Probar con varios materiales y espesores, piezas que no caben, veta,
   márgenes y tamaños reales de placa. Evitar aceptar silenciosamente cambios de veta.
+- [ ] Desarrollar y verificar la secuencia numerada de cortes; el SVG actual
+  muestra distribución, pero no orden de pasadas ni cortes numerados.
 - [ ] Revisar que la distribución y la secuencia sean realizables por el proveedor.
 
 ## 5. Prueba integral del escritorio
 
-- [ ] Crear el modelo 3D, modificar una medida y comprobar que se actualicen el
-  modelo, despiece, distribución y documentos. La prueba previa solo cubrió
-  medidas de piezas, distribución y Excel mediante MCP.
+- [x] Se generaron dos versiones del modelo, despiece, distribución y Excel
+  mediante MCP; el usuario aprobó la visualización del informe 3D como prueba.
+- [ ] Repetir el flujo integral con los perfiles actuales, el descuento explícito
+  de tapacantos y la secuencia de cortes cuando esté disponible.
 
 ## 6. Prueba real del taller
 
@@ -60,6 +78,12 @@ son borradores hasta su revisión por el taller y el proveedor.
   veta, cantos y criterios de corte.
 - [ ] Revisar medidas en sitio, espesor real, herrajes, uniones y estabilidad;
   contrastar documentos con el proveedor antes de fabricar.
+
+## 7. Contribución al proyecto original
+
+- [ ] Revisar el alcance, preparar documentación y pruebas y proponer los
+  cambios al proyecto original mediante un pull request. Mantener el fork propio
+  independientemente de la decisión del proyecto original.
 
 ## Después de la fase 1
 
