@@ -18,6 +18,10 @@ proveedor. La exportación todavía no incluye el diagrama de cortes.
 Los perfiles se guardan en `./supplier_profiles` por defecto. Campos obligatorios:
 `name`, `sheet_width_mm`, `sheet_height_mm`, `thickness_mm`, `blade_kerf_mm`,
 `grain_direction` (`auto`, `length` o `none`). Las medidas son milímetros.
+Opcionalmente, `trim_margin_mm` reserva la misma distancia en cada uno de los
+cuatro bordes de la placa; si se omite se supone cero y se emite un aviso. Las
+medidas de piezas deben ser medidas de corte: no se descuenta tapacanto
+automáticamente. Se calcula un material/espesor por perfil y por ejecución.
 
 `design_l_desk` crea un boceto paramétrico de cinco paneles para un escritorio
 en L. Recibe en centímetros `width` y `depth` (medidas desde la esquina),

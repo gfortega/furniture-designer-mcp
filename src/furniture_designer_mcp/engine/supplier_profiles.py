@@ -24,7 +24,54 @@ def validate_profile(profile: dict) -> dict:
             raise ValueError(f"{key} must be positive (kerf may be zero)")
     if profile["grain_direction"] not in ("auto", "length", "none"):
         raise ValueError("grain_direction must be auto, length or none")
+    margin = profile.get("trim_margin_mm", 0)
+    if (isinstance(margin, bool) or not isinstance(margin, (int, float)) or
+            not math.isfinite(margin) or margin < 0):
+        raise ValueError("trim_margin_mm must be a finite non-negative number")
+    if 2 * margin >= min(profile["sheet_width_mm"], profile["sheet_height_mm"]):
+        raise ValueError("trim_margin_mm leaves no usable sheet area")
     return dict(profile)
+
+
+def optimize_profile(parts: list[dict], profile: dict) -> dict:
+    """Optimize a single-material sheet with a uniform edge trim allowance.
+
+    trim_margin_mm is removed from each of the four sheet edges. Piece dimensions
+    are supplied as cut dimensions; no edge-banding compensation is inferred.
+    """
+    from .cut_optimizer import optimize_cuts_best
+
+    profile = validate_profile(profile)
+    margin = profile.get("trim_margin_mm", 0)
+    width = profile["sheet_width_mm"]
+    height = profile["sheet_height_mm"]
+    for part in parts:
+        thickness = part.get("thickness")
+        if thickness is not None and thickness != profile["thickness_mm"]:
+            raise ValueError(f"Piece {part.get('id')} does not match profile thickness")
+    result = optimize_cuts_best(parts, sheet_width=width - 2 * margin,
+                                sheet_height=height - 2 * margin,
+                                blade_kerf=profile["blade_kerf_mm"],
+                                grain_direction=profile["grain_direction"])
+    result["profile"] = profile
+    if "error" in result:
+        return result
+    result["usable_sheet_size_mm"] = result["sheet_size_mm"]
+    result["sheet_size_mm"] = {"width": width, "height": height}
+    result["trim_margin_mm"] = margin
+    result["waste_percentage_usable_area"] = result["waste_percentage"]
+    piece_area = sum(p["width"] * p["height"] * p.get("qty", 1) for p in parts)
+    total_area = result["sheets_needed"] * width * height
+    result["waste_percentage"] = round((1 - piece_area / total_area) * 100, 1) if total_area else 0
+    for sheet in result["sheets"]:
+        for piece in sheet["pieces"]:
+            piece["x"] += margin
+            piece["y"] += margin
+    if "trim_margin_mm" not in profile:
+        result["warnings"].append("Margen de escuadrado no definido; se usó 0 mm para la prueba.")
+    if margin:
+        result["warnings"].append("El diagrama de texto representa solo el área útil; las coordenadas usan el tablero completo.")
+    return result
 
 
 def _path(directory: str, profile_id: str) -> Path:

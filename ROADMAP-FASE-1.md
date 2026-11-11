@@ -20,15 +20,17 @@ son borradores hasta su revisión por el taller y el proveedor.
   la geometría y el despiece al cambiar sus medidas. Se verificaron dimensiones,
   ausencia de solapamientos entre cajas y consistencia de las orientaciones del
   informe y de FreeCAD, y se generó un informe con dos iteraciones.
-- [ ] Comprobar visualmente el informe 3D en un navegador y revisar con el
-  usuario la posición de los apoyos. La interfaz existente visualiza el modelo;
-  cambiar medidas se hace regenerándolo mediante MCP, no arrastrando piezas.
+- [x] El usuario revisó la visualización 3D y confirmó que es adecuada para la
+  prueba. La interfaz existente visualiza el modelo; cambiar medidas se hace
+  regenerándolo mediante MCP, no arrastrando piezas.
 - [ ] Definir y validar soportes, refuerzos, anclajes y uniones antes de fabricar.
 
 ## 3. Entrega al proveedor
 
 - [x] Prototipo: perfiles de placa y sierra, despiece CSV/XLSX y agrupación que
   considera material, veta y tapacantos.
+- [x] El perfil admite un margen uniforme de escuadrado por cada borde del
+  tablero. Si no está definido, el cálculo usa cero con una advertencia.
 - [ ] Definir márgenes de escuadrado y medidas antes/después del tapacanto.
 - [ ] Incluir en la entrega resumen de placas y diagrama de cortes, y ajustar
   columnas y convenciones al proveedor.

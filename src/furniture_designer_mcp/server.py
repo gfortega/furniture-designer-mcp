@@ -20,7 +20,7 @@ from .knowledge.brief_formatters import (
     brief_assembly_specs,
 )
 from .engine.designer import generate_furniture_spec, generate_l_desk_spec
-from .engine.cut_optimizer import optimize_cuts as _optimize_cuts, optimize_cuts_best as _optimize_cuts_best
+from .engine.cut_optimizer import optimize_cuts as _optimize_cuts
 from .engine.structural_validator import validate_structure as _validate
 from .engine.bom_generator import generate_bom as _generate_bom
 from .engine.spec_validator import validate_spec, validate_cut_parts
@@ -36,7 +36,7 @@ from .engine.freecad_client import get_client as _get_freecad_client
 from .engine.report_generator import generate_design_report as _generate_report
 from .engine.spec_builder import build_spec_from_layout as _build_spec
 from .engine.section_mapper import map_sections as _map_sections, resolve_reference as _resolve_section
-from .engine.supplier_profiles import save_profile as _save_profile, load_profile as _load_profile
+from .engine.supplier_profiles import save_profile as _save_profile, load_profile as _load_profile, optimize_profile as _optimize_profile
 from .engine.supplier_export import export_cutlist_csv as _export_cutlist_csv, export_cutlist_xlsx as _export_cutlist_xlsx
 
 logger = logging.getLogger(__name__)
@@ -446,16 +446,8 @@ def optimize_with_profile(ctx: Context, parts: list[dict], profile_id: str, dire
         err, conversions = _cut_parts_error_response(parts)
         if err:
             return err
-        for part in parts:
-            thickness = part.get("thickness")
-            if thickness is not None and thickness != profile["thickness_mm"]:
-                raise ValueError(f"Piece {part.get('id')} does not match profile thickness")
-        result = _optimize_cuts_best(parts, sheet_width=profile["sheet_width_mm"],
-                                sheet_height=profile["sheet_height_mm"],
-                                blade_kerf=profile["blade_kerf_mm"],
-                                grain_direction=profile["grain_direction"])
+        result = _optimize_profile(parts, profile)
         result.setdefault("warnings", []).extend(conversions)
-        result["profile"] = profile
         return [TextContent(type="text", text=json.dumps(result, ensure_ascii=False))]
     except (ValueError, OSError, json.JSONDecodeError) as e:
         return [TextContent(type="text", text=f"Error de perfil: {e}")]

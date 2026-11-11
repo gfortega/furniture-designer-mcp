@@ -5,7 +5,7 @@ from pathlib import Path
 
 from furniture_designer_mcp.engine.bom_generator import generate_bom
 from furniture_designer_mcp.engine.cut_optimizer import optimize_cuts, optimize_cuts_best
-from furniture_designer_mcp.engine.supplier_profiles import load_profile, save_profile
+from furniture_designer_mcp.engine.supplier_profiles import load_profile, save_profile, optimize_profile
 from furniture_designer_mcp.engine.supplier_export import export_cutlist_csv, export_cutlist_xlsx
 
 
@@ -58,6 +58,27 @@ class SupplierWorkflowTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 save_profile(directory, "bad", profile)
             self.assertFalse(Path(directory, "bad.json").exists())
+
+    def test_trim_margin_is_reserved_on_all_edges(self):
+        profile = {"name": "Test", "sheet_width_mm": 1000, "sheet_height_mm": 600,
+                   "thickness_mm": 18, "blade_kerf_mm": 3, "grain_direction": "none",
+                   "trim_margin_mm": 10}
+        result = optimize_profile([{"id": "a", "width": 980, "height": 580}], profile)
+        self.assertEqual(result["sheets_needed"], 1)
+        self.assertEqual(result["usable_sheet_size_mm"], {"width": 980, "height": 580})
+        self.assertEqual(result["sheet_size_mm"], {"width": 1000, "height": 600})
+        piece = result["sheets"][0]["pieces"][0]
+        self.assertEqual((piece["x"], piece["y"]), (10, 10))
+        self.assertEqual(result["waste_percentage"], 5.3)
+        self.assertIn("error", optimize_profile([{"id": "b", "width": 990, "height": 590}], profile))
+        with self.assertRaises(ValueError):
+            optimize_profile([], {**profile, "trim_margin_mm": 300})
+
+    def test_missing_margin_is_explicitly_reported(self):
+        profile = {"name": "Test", "sheet_width_mm": 1000, "sheet_height_mm": 600,
+                   "thickness_mm": 18, "blade_kerf_mm": 3, "grain_direction": "none"}
+        result = optimize_profile([{"id": "a", "width": 100, "height": 100}], profile)
+        self.assertTrue(any("no definido" in warning for warning in result["warnings"]))
 
     def test_export_keeps_distinct_edges_and_prevents_formulas(self):
         parts = [{"id": "=HYPERLINK()", "role": "side", "width_mm": 600,
