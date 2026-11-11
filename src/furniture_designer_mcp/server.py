@@ -36,8 +36,10 @@ from .engine.freecad_client import get_client as _get_freecad_client
 from .engine.report_generator import generate_design_report as _generate_report
 from .engine.spec_builder import build_spec_from_layout as _build_spec
 from .engine.section_mapper import map_sections as _map_sections, resolve_reference as _resolve_section
-from .engine.supplier_profiles import save_profile as _save_profile, load_profile as _load_profile, optimize_profile as _optimize_profile
+from .engine.supplier_profiles import save_profile as _save_profile, load_profile as _load_profile, optimize_profile as _optimize_profile, list_profiles as _list_profiles
 from .engine.supplier_export import export_cutlist_csv as _export_cutlist_csv, export_cutlist_xlsx as _export_cutlist_xlsx
+from .engine.supplier_templates import save_template as _save_template, list_templates as _list_templates
+from .engine.supplier_package import build_supplier_package as _build_supplier_package
 
 logger = logging.getLogger(__name__)
 
@@ -434,7 +436,30 @@ def save_supplier_profile(ctx: Context, profile_id: str, profile: dict, director
 
 
 @mcp.tool()
-def optimize_with_profile(ctx: Context, parts: list[dict], profile_id: str, directory: str = "./supplier_profiles") -> list[TextContent]:
+def list_supplier_profiles(ctx: Context, directory: str = "./supplier_profiles") -> list[TextContent]:
+    """List the built-in provisional profile and saved supplier profiles."""
+    return [TextContent(type="text", text=json.dumps(_list_profiles(directory), ensure_ascii=False))]
+
+
+@mcp.tool()
+def save_supplier_template(ctx: Context, template_id: str, template: dict,
+                           directory: str = "./supplier_templates") -> list[TextContent]:
+    """Save a named export template with name and ordered columns; IDs may be overwritten."""
+    try:
+        path = _save_template(directory, template_id, template)
+        return [TextContent(type="text", text=f"Plantilla guardada: {path}")]
+    except (ValueError, OSError) as e:
+        return [TextContent(type="text", text=f"Error de plantilla: {e}")]
+
+
+@mcp.tool()
+def list_supplier_templates(ctx: Context, directory: str = "./supplier_templates") -> list[TextContent]:
+    """List the built-in generic export template and saved templates."""
+    return [TextContent(type="text", text=json.dumps(_list_templates(directory), ensure_ascii=False))]
+
+
+@mcp.tool()
+def optimize_with_profile(ctx: Context, parts: list[dict], profile_id: str = "generico", directory: str = "./supplier_profiles") -> list[TextContent]:
     """Calculate a layout with saved supplier settings; review all warnings before cutting.
 
     The profile applies to one material and thickness. The optimizer may relax grain
@@ -519,6 +544,27 @@ def optimize_cuts(
 # ---------------------------------------------------------------------------
 # BOM tools
 # ---------------------------------------------------------------------------
+
+
+@mcp.tool()
+def export_supplier_package(ctx: Context, spec: dict, destination: str,
+                            profile_id: str = "generico", template_id: str = "generica",
+                            profile_directory: str = "./supplier_profiles",
+                            template_directory: str = "./supplier_templates") -> list[TextContent]:
+    """Create a draft Excel cut list with sheet summary and a matching SVG diagram.
+
+    The provisional built-in profile and template are used by default. The spec
+    must contain one material and thickness. Cut dimensions and banding require
+    review; an edge-banding adjustment is never inferred.
+    """
+    if err := _spec_error_response(spec):
+        return err
+    try:
+        result = _build_supplier_package(spec, destination, profile_id, template_id,
+                                         profile_directory, template_directory)
+        return [TextContent(type="text", text=json.dumps(result, ensure_ascii=False))]
+    except (ValueError, OSError, KeyError) as e:
+        return [TextContent(type="text", text=f"Error al generar paquete: {e}")]
 
 
 @mcp.tool()

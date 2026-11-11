@@ -31,9 +31,12 @@ son borradores hasta su revisión por el taller y el proveedor.
   considera material, veta y tapacantos.
 - [x] El perfil admite un margen uniforme de escuadrado por cada borde del
   tablero. Si no está definido, el cálculo usa cero con una advertencia.
+- [x] Hay un perfil y una plantilla genéricos provisionales; se pueden guardar,
+  listar y seleccionar perfiles y plantillas adicionales mediante MCP.
+- [x] El paquete preliminar incluye Excel con despiece y resumen de placas, y un
+  diagrama SVG calculado para el mismo conjunto de piezas y el mismo perfil.
 - [ ] Definir márgenes de escuadrado y medidas antes/después del tapacanto.
-- [ ] Incluir en la entrega resumen de placas y diagrama de cortes, y ajustar
-  columnas y convenciones al proveedor.
+- [ ] Ajustar columnas y convenciones al proveedor real y revisar el diagrama.
 
 ## 4. Validación de cortes
 

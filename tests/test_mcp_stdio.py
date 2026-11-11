@@ -75,3 +75,25 @@ class MCPStdioTests(unittest.IsolatedAsyncioTestCase):
                         "cut_data": modified})
                     self.assertIn("actualizado", response.content[0].text)
                     self.assertIn('"name": "190 cm"', Path(report).read_text(encoding="utf-8"))
+                    package = str(Path(directory, "paquete.xlsx"))
+                    response = await session.call_tool("export_supplier_package", {
+                        "spec": spec, "destination": package})
+                    result = json.loads(response.content[0].text)
+                    self.assertEqual(result["result"]["sheets_needed"], 1)
+                    self.assertTrue(Path(result["diagram"]).exists())
+                    self.assertEqual(load_workbook(package).sheetnames, ["Despiece", "Placas y avisos"])
+                    templates = str(Path(directory, "templates"))
+                    saved = await session.call_tool("save_supplier_template", {
+                        "template_id": "test", "directory": templates,
+                        "template": {"name": "Test", "columns": ["Piezas", "Cantidad"]}})
+                    self.assertIn("guardada", saved.content[0].text)
+                    listed = await session.call_tool("list_supplier_templates", {"directory": templates})
+                    self.assertEqual({item["id"] for item in json.loads(listed.content[0].text)},
+                                     {"generica", "test"})
+                    custom = str(Path(directory, "personalizado.xlsx"))
+                    response = await session.call_tool("export_supplier_package", {
+                        "spec": spec, "destination": custom, "template_id": "test",
+                        "template_directory": templates})
+                    self.assertFalse(response.isError)
+                    self.assertEqual(list(load_workbook(custom)["Despiece"].values)[0],
+                                     ("Piezas", "Cantidad"))

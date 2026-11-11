@@ -6,8 +6,9 @@ import csv
 from pathlib import Path
 
 from .bom_generator import generate_bom
+from .supplier_templates import DEFAULT_COLUMNS, validate_template
 
-HEADERS = ["Estado", "Piezas", "Cantidad", "Largo mm", "Ancho mm", "Espesor mm", "Material", "Veta", "Tapacantos"]
+HEADERS = DEFAULT_COLUMNS
 
 def _cell(value):
     """Prevent spreadsheet applications from interpreting text as formulas."""
@@ -27,19 +28,27 @@ def _rows(spec: dict):
         )]
 
 
-def export_cutlist_csv(spec: dict, destination: str) -> Path:
+def _selected_rows(spec: dict, template: dict | None):
+    columns = HEADERS if template is None else validate_template(template)["columns"]
+    indices = [HEADERS.index(column) for column in columns]
+    return columns, ([row[i] for i in indices] for row in _rows(spec))
+
+
+def export_cutlist_csv(spec: dict, destination: str, template: dict | None = None) -> Path:
     """Write a provisional semicolon-delimited UTF-8 CSV, openable in Excel."""
     path = Path(destination)
     if path.suffix.lower() != ".csv":
         raise ValueError("destination must end in .csv")
     with path.open("w", encoding="utf-8-sig", newline="") as output:
         writer = csv.writer(output, delimiter=";")
-        writer.writerow(HEADERS)
-        writer.writerows(_rows(spec))
+        columns, rows = _selected_rows(spec, template)
+        writer.writerow(columns)
+        writer.writerows(rows)
     return path
 
 
-def export_cutlist_xlsx(spec: dict, destination: str) -> Path:
+def export_cutlist_xlsx(spec: dict, destination: str, template: dict | None = None,
+                        cut_data: dict | None = None) -> Path:
     """Write a provisional Excel workbook with the same fields as the CSV."""
     from openpyxl import Workbook
     from openpyxl.styles import Font
@@ -50,12 +59,32 @@ def export_cutlist_xlsx(spec: dict, destination: str) -> Path:
     book = Workbook()
     sheet = book.active
     sheet.title = "Despiece"
-    sheet.append(HEADERS)
+    columns, rows = _selected_rows(spec, template)
+    sheet.append(columns)
     for cell in sheet[1]:
         cell.font = Font(bold=True)
-    for row in _rows(spec):
+    for row in rows:
         sheet.append(row)
     sheet.freeze_panes = "A2"
     sheet.auto_filter.ref = sheet.dimensions
+    if cut_data is not None:
+        summary = book.create_sheet("Placas y avisos")
+        profile = cut_data["profile"]
+        for label, value in [
+            ("Estado", "BORRADOR - CONFIRMAR CON PROVEEDOR"),
+            ("Perfil", profile["name"]),
+            ("Placas", cut_data["sheets_needed"]),
+            ("Largo placa mm", profile["sheet_width_mm"]),
+            ("Ancho placa mm", profile["sheet_height_mm"]),
+            ("Espesor mm", profile["thickness_mm"]),
+            ("Sierra mm", profile["blade_kerf_mm"]),
+            ("Margen por borde mm", profile.get("trim_margin_mm", "NO DEFINIDO")),
+            ("Veta", profile["grain_direction"]),
+            ("Superficie no ocupada %", cut_data["waste_percentage"]),
+            ("Tapacanto", "Confirmar criterio de medidas con proveedor"),
+        ]:
+            summary.append([_cell(label), _cell(value)])
+        for warning in cut_data.get("warnings", []):
+            summary.append(["Aviso", _cell(warning)])
     book.save(path)
     return path

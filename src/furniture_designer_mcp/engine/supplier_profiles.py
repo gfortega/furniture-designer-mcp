@@ -7,6 +7,14 @@ import math
 import re
 from pathlib import Path
 
+DEFAULT_PROFILE_ID = "generico"
+DEFAULT_PROFILE = {
+    "name": "Genérico provisional — confirmar con proveedor",
+    "sheet_width_mm": 2800, "sheet_height_mm": 2070,
+    "thickness_mm": 18, "blade_kerf_mm": 3,
+    "grain_direction": "none", "provisional": True,
+}
+
 
 def validate_profile(profile: dict) -> dict:
     """Validate settings without guessing allowances or edgebanding rules."""
@@ -56,6 +64,8 @@ def optimize_profile(parts: list[dict], profile: dict) -> dict:
     result["profile"] = profile
     if "error" in result:
         return result
+    if profile.get("provisional"):
+        result["warnings"].append("Perfil provisional: confirmar placa, espesor, sierra, veta y margen con el proveedor.")
     result["usable_sheet_size_mm"] = result["sheet_size_mm"]
     result["sheet_size_mm"] = {"width": width, "height": height}
     result["trim_margin_mm"] = margin
@@ -82,6 +92,8 @@ def _path(directory: str, profile_id: str) -> Path:
 
 def save_profile(directory: str, profile_id: str, profile: dict) -> Path:
     path = _path(directory, profile_id)
+    if profile_id == DEFAULT_PROFILE_ID:
+        raise ValueError("El perfil genérico integrado no se puede reemplazar; guarde otro identificador")
     validated = validate_profile(profile)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(validated, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
@@ -89,4 +101,19 @@ def save_profile(directory: str, profile_id: str, profile: dict) -> Path:
 
 
 def load_profile(directory: str, profile_id: str) -> dict:
+    if profile_id == DEFAULT_PROFILE_ID:
+        return dict(DEFAULT_PROFILE)
     return validate_profile(json.loads(_path(directory, profile_id).read_text(encoding="utf-8")))
+
+
+def list_profiles(directory: str) -> list[dict]:
+    result = [{"id": DEFAULT_PROFILE_ID, "profile": dict(DEFAULT_PROFILE), "builtin": True}]
+    root = Path(directory)
+    for path in sorted(root.glob("*.json")):
+        if path.stem == DEFAULT_PROFILE_ID:
+            continue
+        try:
+            result.append({"id": path.stem, "profile": load_profile(directory, path.stem), "builtin": False})
+        except (ValueError, OSError):
+            result.append({"id": path.stem, "error": "Perfil inválido o inaccesible"})
+    return result

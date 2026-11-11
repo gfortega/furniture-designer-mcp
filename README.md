@@ -23,6 +23,21 @@ cuatro bordes de la placa; si se omite se supone cero y se emite un aviso. Las
 medidas de piezas deben ser medidas de corte: no se descuenta tapacanto
 automáticamente. Se calcula un material/espesor por perfil y por ejecución.
 
+El perfil integrado `generico` es provisional: 2800 × 2070 × 18 mm, sierra
+de 3 mm, sin restricción de veta y sin margen confirmado. No representa un
+proveedor real. `save_supplier_profile` y `list_supplier_profiles` permiten
+guardar y consultar otros perfiles. `save_supplier_template` y
+`list_supplier_templates` permiten guardar y consultar plantillas de columnas;
+la plantilla integrada se llama `generica`. Ambas configuraciones integradas
+son de solo lectura. `export_supplier_package` recibe `spec` y una ruta de
+destino `.xlsx`; usa los valores genéricos si no se indican `profile_id` y
+`template_id`, y produce un Excel con despiece y resumen más un SVG de cortes.
+El paquete es un borrador: hay que confirmar dimensiones de corte, tapacantos,
+veta, sierra y márgenes con el proveedor. Se rechazan materiales mezclados,
+espesores incompatibles y piezas cuya veta solo permite colocarlas si se ignora
+la restricción. Los cortes numerados y la validación de la secuencia para la
+máquina del proveedor quedan pendientes.
+
 `design_l_desk` crea un boceto paramétrico de cinco paneles para un escritorio
 en L. Recibe en centímetros `width` y `depth` (medidas desde la esquina),
 `height`, `worktop_depth` y opcionalmente `material` (`melamine_16` o
