@@ -35,7 +35,10 @@ son borradores hasta su revisión por el taller y el proveedor.
   listar y seleccionar perfiles y plantillas adicionales mediante MCP.
 - [x] El paquete preliminar incluye Excel con despiece y resumen de placas, y un
   diagrama SVG calculado para el mismo conjunto de piezas y el mismo perfil.
-- [ ] Definir márgenes de escuadrado y medidas antes/después del tapacanto.
+- [x] El paquete permite descontar el tapacanto que colocará el taller, solo en
+  bordes indicados explícitamente, y muestra medidas terminadas y de corte.
+- [ ] Confirmar márgenes, material, espesor real y tapacantos con el proveedor
+  y el taller; los valores predeterminados son provisionales.
 - [ ] Ajustar columnas y convenciones al proveedor real y revisar el diagrama.
 
 ## 4. Validación de cortes

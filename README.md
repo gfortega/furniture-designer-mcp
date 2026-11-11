@@ -19,12 +19,15 @@ Los perfiles se guardan en `./supplier_profiles` por defecto. Campos obligatorio
 `name`, `sheet_width_mm`, `sheet_height_mm`, `thickness_mm`, `blade_kerf_mm`,
 `grain_direction` (`auto`, `length` o `none`). Las medidas son milímetros.
 Opcionalmente, `trim_margin_mm` reserva la misma distancia en cada uno de los
-cuatro bordes de la placa; si se omite se supone cero y se emite un aviso. Las
-medidas de piezas deben ser medidas de corte: no se descuenta tapacanto
-automáticamente. Se calcula un material/espesor por perfil y por ejecución.
+cuatro bordes de la placa; si se omite se supone cero y se emite un aviso. En
+`optimize_with_profile` las medidas son de corte. En `export_supplier_package`
+son medidas terminadas y se descuenta solo el canto indicado explícitamente.
+Se calcula un material/espesor por perfil y por ejecución.
 
-El perfil integrado `generico` es provisional: 2800 × 2070 × 18 mm, sierra
-de 3 mm, sin restricción de veta y sin margen confirmado. No representa un
+El perfil integrado `generico` es provisional: 2600 × 1830 × 18 mm, sierra
+de 3,2 mm, margen de 5 mm por borde, canto de 1 mm y sin restricción de veta.
+El formato corresponde a una oferta local y el ancho de sierra a un ejemplo de
+fabricante; margen y canto son supuestos de prueba. No representa un
 proveedor real. `save_supplier_profile` y `list_supplier_profiles` permiten
 guardar y consultar otros perfiles. `save_supplier_template` y
 `list_supplier_templates` permiten guardar y consultar plantillas de columnas;
@@ -37,6 +40,18 @@ veta, sierra y márgenes con el proveedor. Se rechazan materiales mezclados,
 espesores incompatibles y piezas cuya veta solo permite colocarlas si se ignora
 la restricción. Los cortes numerados y la validación de la secuencia para la
 máquina del proveedor quedan pendientes.
+
+Para `export_supplier_package`, las dimensiones en `spec` son terminadas. El
+opcional `banding_by_part` indica por pieza `largo_inicio`, `largo_fin`,
+`ancho_inicio`, `ancho_fin` y su espesor en mm; `null` usa el espesor del
+perfil, `{}` confirma que no lleva canto y omitir la pieza significa no definido.
+El Excel incluye una hoja con medidas terminadas y de corte. Las etiquetas
+genéricas previas como `front` no se interpretan automáticamente porque no
+definen sin ambigüedad el borde y su espesor. El taller coloca el tapacanto.
+
+Referencias de valores provisionales: [formato 2600 × 1830 × 18 en Bolivia](https://placacenter.com.bo/producto/mdp-melamina-roble-kendal-natural-2600x1830x18mm/),
+[ejemplo de disco de 3,2 mm](https://www.kanefusa.net/en/products/000284.html),
+[ejemplos de espesores de canto](https://www.egger.com/get_download/2360b300-5f73-44eb-a3b1-5e1c3b6e54ac/ABS_Seamless_Edging_en.pdf?country=DE).
 
 `design_l_desk` crea un boceto paramétrico de cinco paneles para un escritorio
 en L. Recibe en centímetros `width` y `depth` (medidas desde la esquina),

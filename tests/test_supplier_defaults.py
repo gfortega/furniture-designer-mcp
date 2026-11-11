@@ -20,7 +20,7 @@ class DefaultSupplierTests(unittest.TestCase):
             self.assertEqual(result["result"]["sheets_needed"], 1)
             self.assertTrue(any("provisional" in w for w in result["result"]["warnings"]))
             workbook = load_workbook(path)
-            self.assertEqual(workbook.sheetnames, ["Despiece", "Placas y avisos"])
+            self.assertEqual(workbook.sheetnames, ["Despiece", "Placas y avisos", "Diseño y corte"])
             rows = list(workbook["Despiece"].values)
             self.assertEqual(sum(row[2] for row in rows[1:]), 5)
             self.assertEqual(next(row for row in rows[1:] if row[1] == "tapa_principal")[3], 1900)
@@ -35,7 +35,7 @@ class DefaultSupplierTests(unittest.TestCase):
             default = load_profile(directory, "generico")
             save_profile(directory, "proveedor_a", {**default, "name": "Proveedor A", "sheet_width_mm": 2440})
             self.assertEqual(load_profile(directory, "proveedor_a")["sheet_width_mm"], 2440)
-            self.assertEqual(load_profile(directory, "generico")["sheet_width_mm"], 2800)
+            self.assertEqual(load_profile(directory, "generico")["sheet_width_mm"], 2600)
             self.assertEqual({p["id"] for p in list_profiles(directory)}, {"generico", "proveedor_a"})
         with tempfile.TemporaryDirectory() as directory:
             save_template(directory, "proveedor_a", {"name": "Proveedor A", "columns": ["Piezas", "Cantidad"]})
@@ -69,3 +69,35 @@ class DefaultSupplierTests(unittest.TestCase):
             book = load_workbook(path)
             self.assertEqual(list(book["Despiece"].values)[0], ("Piezas", "Cantidad", "Largo mm"))
             self.assertEqual(dict(book["Placas y avisos"].values)["Margen por borde mm"], 2)
+
+    def test_finished_sizes_are_adjusted_only_for_explicit_edges(self):
+        with tempfile.TemporaryDirectory() as directory:
+            spec = generate_l_desk_spec(190, 200, 75, 60)
+            path = Path(directory, "pedido.xlsx")
+            result = build_supplier_package(spec, str(path), banding_by_part={
+                "tapa_principal": {"largo_inicio": 1, "largo_fin": 1, "ancho_fin": 0.8},
+                "apoyo_extremo_principal": {},
+            })
+            self.assertEqual(spec["parts"][0]["width_mm"], 1900)
+            workbook = load_workbook(path)
+            rows = list(workbook["Diseño y corte"].values)
+            top = next(row for row in rows if row[0] == "tapa_principal")
+            self.assertEqual(top[1:5], (1900, 600, 1898, 599.2))
+            end = next(row for row in rows if row[0] == "apoyo_extremo_principal")
+            self.assertEqual(end[5], "SIN CANTEAR")
+            unknown = next(row for row in rows if row[0] == "tapa_lateral")
+            self.assertEqual(unknown[5], "POR DEFINIR")
+            placement = next(p for s in result["result"]["sheets"] for p in s["pieces"] if p["id"] == "tapa_principal")
+            self.assertEqual(sorted((placement["width"], placement["height"])), [599.2, 1898])
+            self.assertTrue(any("sin definir" in w for w in result["result"]["warnings"]))
+
+    def test_rejects_unknown_piece_and_invalid_edges(self):
+        with tempfile.TemporaryDirectory() as directory:
+            spec = generate_l_desk_spec(190, 200, 75, 60)
+            path = str(Path(directory, "pedido.xlsx"))
+            for data in ({"no_existe": {}}, {"tapa_principal": {"frente": 1}},
+                         {"tapa_principal": {"ancho_fin": -1}},
+                         {"tapa_principal": {"ancho_fin": 1000}}):
+                with self.assertRaises(ValueError):
+                    build_supplier_package(spec, path, banding_by_part=data)
+                self.assertFalse(Path(path).exists())

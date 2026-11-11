@@ -24,7 +24,8 @@ def _rows(spec: dict):
             "BORRADOR - REVISAR", ", ".join(panel["ids"]), panel["qty"],
             panel["width_mm"], panel["height_mm"], panel["thickness_mm"],
             panel["material"], panel.get("grain") or "POR DEFINIR",
-            ", ".join(panel.get("edge_banding", [])) or "POR DEFINIR",
+            ", ".join(panel.get("edge_banding", [])) or
+            ("SIN CANTEAR" if panel.get("edge_banding_confirmed") else "POR DEFINIR"),
         )]
 
 
@@ -86,5 +87,15 @@ def export_cutlist_xlsx(spec: dict, destination: str, template: dict | None = No
             summary.append([_cell(label), _cell(value)])
         for warning in cut_data.get("warnings", []):
             summary.append(["Aviso", _cell(warning)])
+        if "finished_dimensions_mm" in cut_data:
+            dimensions = book.create_sheet("Diseño y corte")
+            dimensions.append(["Pieza", "Largo terminado mm", "Ancho terminado mm",
+                               "Largo de corte mm", "Ancho de corte mm", "Cantos"])
+            for p in spec["parts"]:
+                finished = cut_data["finished_dimensions_mm"][p["id"]]
+                edges = ", ".join(p.get("edge_banding", [])) or (
+                    "SIN CANTEAR" if p.get("edge_banding_confirmed") else "POR DEFINIR")
+                dimensions.append([_cell(v) for v in (p["id"], finished["largo_mm"],
+                                   finished["ancho_mm"], p["width_mm"], p["height_mm"], edges)])
     book.save(path)
     return path

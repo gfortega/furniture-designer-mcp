@@ -77,11 +77,15 @@ class MCPStdioTests(unittest.IsolatedAsyncioTestCase):
                     self.assertIn('"name": "190 cm"', Path(report).read_text(encoding="utf-8"))
                     package = str(Path(directory, "paquete.xlsx"))
                     response = await session.call_tool("export_supplier_package", {
-                        "spec": spec, "destination": package})
+                        "spec": spec, "destination": package,
+                        "banding_by_part": {"tapa_principal": {"largo_inicio": 1, "largo_fin": 1}}})
                     result = json.loads(response.content[0].text)
                     self.assertEqual(result["result"]["sheets_needed"], 1)
                     self.assertTrue(Path(result["diagram"]).exists())
-                    self.assertEqual(load_workbook(package).sheetnames, ["Despiece", "Placas y avisos"])
+                    self.assertEqual(load_workbook(package).sheetnames, ["Despiece", "Placas y avisos", "Diseño y corte"])
+                    rows = list(load_workbook(package)["Diseño y corte"].values)
+                    top = next(row for row in rows if row[0] == "tapa_principal")
+                    self.assertEqual(top[1:5], (1900, 600, 1898, 600))
                     templates = str(Path(directory, "templates"))
                     saved = await session.call_tool("save_supplier_template", {
                         "template_id": "test", "directory": templates,

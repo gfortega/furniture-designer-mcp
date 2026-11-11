@@ -550,18 +550,23 @@ def optimize_cuts(
 def export_supplier_package(ctx: Context, spec: dict, destination: str,
                             profile_id: str = "generico", template_id: str = "generica",
                             profile_directory: str = "./supplier_profiles",
-                            template_directory: str = "./supplier_templates") -> list[TextContent]:
+                            template_directory: str = "./supplier_templates",
+                            banding_by_part: dict | None = None) -> list[TextContent]:
     """Create a draft Excel cut list with sheet summary and a matching SVG diagram.
 
     The provisional built-in profile and template are used by default. The spec
-    must contain one material and thickness. Cut dimensions and banding require
-    review; an edge-banding adjustment is never inferred.
+    must contain one material and thickness. Spec dimensions are finished sizes.
+    To deduct edge banding, pass piece IDs mapped to edges and thickness in mm,
+    e.g. {"tapa": {"largo_inicio": 1, "largo_fin": 1}}. Edge keys are
+    largo_inicio/largo_fin (deduct from width_mm) and ancho_inicio/ancho_fin
+    (deduct from height_mm). A null thickness uses the profile default; an empty
+    mapping confirms no banding; an absent piece means unconfirmed and no deduction.
     """
     if err := _spec_error_response(spec):
         return err
     try:
         result = _build_supplier_package(spec, destination, profile_id, template_id,
-                                         profile_directory, template_directory)
+                                         profile_directory, template_directory, banding_by_part)
         return [TextContent(type="text", text=json.dumps(result, ensure_ascii=False))]
     except (ValueError, OSError, KeyError) as e:
         return [TextContent(type="text", text=f"Error al generar paquete: {e}")]

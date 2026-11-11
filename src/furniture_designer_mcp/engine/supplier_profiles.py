@@ -10,8 +10,9 @@ from pathlib import Path
 DEFAULT_PROFILE_ID = "generico"
 DEFAULT_PROFILE = {
     "name": "Genérico provisional — confirmar con proveedor",
-    "sheet_width_mm": 2800, "sheet_height_mm": 2070,
-    "thickness_mm": 18, "blade_kerf_mm": 3,
+    "sheet_width_mm": 2600, "sheet_height_mm": 1830,
+    "thickness_mm": 18, "blade_kerf_mm": 3.2,
+    "trim_margin_mm": 5, "default_edge_banding_mm": 1,
     "grain_direction": "none", "provisional": True,
 }
 
@@ -38,6 +39,10 @@ def validate_profile(profile: dict) -> dict:
         raise ValueError("trim_margin_mm must be a finite non-negative number")
     if 2 * margin >= min(profile["sheet_width_mm"], profile["sheet_height_mm"]):
         raise ValueError("trim_margin_mm leaves no usable sheet area")
+    if "default_edge_banding_mm" in profile:
+        value = profile["default_edge_banding_mm"]
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value <= 0:
+            raise ValueError("default_edge_banding_mm must be a finite positive number")
     return dict(profile)
 
 
