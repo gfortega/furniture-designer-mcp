@@ -80,6 +80,25 @@ class SupplierWorkflowTests(unittest.TestCase):
         result = optimize_profile([{"id": "a", "width": 100, "height": 100}], profile)
         self.assertTrue(any("no definido" in warning for warning in result["warnings"]))
 
+    def test_invalid_pieces_and_incompatible_thickness_are_rejected(self):
+        profile = {"name": "15 mm", "sheet_width_mm": 2600, "sheet_height_mm": 1830,
+                   "thickness_mm": 15, "blade_kerf_mm": 3.2, "grain_direction": "none"}
+        for piece in ({"id": "bad", "width": -1, "height": 100},
+                      {"id": "bad", "width": 100, "height": 100, "qty": 0},
+                      {"id": "bad", "width": 100, "height": 100, "thickness": 18},
+                      {"id": "bad", "width": 100, "height": 100, "grain": "unknown"}):
+            with self.assertRaises(ValueError):
+                optimize_profile([piece], profile)
+        self.assertIn("error", optimize_profile([{"id": "large", "width": 3000, "height": 2000}], profile))
+
+    def test_grain_restriction_is_not_silently_relaxed(self):
+        profile = {"name": "Veta", "sheet_width_mm": 1000, "sheet_height_mm": 500,
+                   "thickness_mm": 18, "blade_kerf_mm": 3, "grain_direction": "length"}
+        # Rotation would fit, but would turn a fixed lengthwise grain.
+        result = optimize_profile([{"id": "veta", "width": 400, "height": 800}], profile)
+        self.assertIn("error", result)
+        self.assertIn("veta", result["error"])
+
     def test_export_keeps_distinct_edges_and_prevents_formulas(self):
         parts = [{"id": "=HYPERLINK()", "role": "side", "width_mm": 600,
                   "height_mm": 732, "thickness_mm": 18, "edge_banding": ["front"]},

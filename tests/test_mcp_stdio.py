@@ -82,7 +82,7 @@ class MCPStdioTests(unittest.IsolatedAsyncioTestCase):
                     result = json.loads(response.content[0].text)
                     self.assertEqual(result["result"]["sheets_needed"], 1)
                     self.assertTrue(Path(result["diagram"]).exists())
-                    self.assertEqual(load_workbook(package).sheetnames, ["Despiece", "Placas y avisos", "Diseño y corte"])
+                    self.assertEqual(load_workbook(package).sheetnames, ["Despiece", "Placas y avisos", "Diseño y corte", "Secuencia cortes"])
                     rows = list(load_workbook(package)["Diseño y corte"].values)
                     top = next(row for row in rows if row[0] == "tapa_principal")
                     self.assertEqual(top[1:5], (1900, 600, 1898, 600))

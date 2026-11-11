@@ -97,5 +97,15 @@ def export_cutlist_xlsx(spec: dict, destination: str, template: dict | None = No
                     "SIN CANTEAR" if p.get("edge_banding_confirmed") else "POR DEFINIR")
                 dimensions.append([_cell(v) for v in (p["id"], finished["largo_mm"],
                                    finished["ancho_mm"], p["width_mm"], p["height_mm"], edges)])
+        if "cut_sequence" in cut_data:
+            cuts = book.create_sheet("Secuencia cortes")
+            cuts.append(["BORRADOR: confirmar con proveedor y máquina"])
+            cuts.append(["Placa", "Corte", "Eje", "Inicio sierra mm", "Centro sierra mm",
+                         "Ancho sierra mm", "Región X mm", "Región Y mm", "Región largo mm", "Región ancho mm"])
+            for sheet_plan in cut_data["cut_sequence"]:
+                for cut in sheet_plan["cuts"]:
+                    cuts.append([sheet_plan["sheet_number"], cut["numero"], cut["eje"],
+                                 cut["inicio_sierra_mm"], cut["trayecto_centro_mm"],
+                                 cut["ancho_sierra_mm"], *cut["region_antes_mm"]])
     book.save(path)
     return path

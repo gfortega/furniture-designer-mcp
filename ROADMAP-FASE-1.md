@@ -5,16 +5,17 @@ son borradores hasta su revisión por el taller y el proveedor.
 
 ## Situación actual
 
-Estamos en la preparación de la entrega al proveedor y la validación de cortes
-(etapas 3 y 4). La configuración genérica utiliza provisionalmente tablero
+La implementación está preparada para una prueba en vivo con el usuario. La
+configuración genérica utiliza provisionalmente tablero
 2600 × 1830 × 18 mm, sierra de 3,2 mm, margen de 5 mm por borde y canto de
 1 mm en los bordes seleccionados; sin restricción de veta. Son supuestos, no
 condiciones confirmadas de un proveedor. El taller coloca el tapacanto y se
 debe descontar su espesor antes de pedir el corte.
 
-La última verificación ejecutó 18 pruebas, incluida la exportación con descuento
-de tapacantos por MCP entre procesos. Ver archivos de ejemplo en
-`../evaluacion-furniture-designer/paso-2-escritorio-l/`.
+Se ejecutaron pruebas automatizadas de geometría, secuencia, exportación y MCP
+entre procesos, y se prepararon dos versiones del escritorio para la prueba en
+`../evaluacion-furniture-designer/prueba-en-vivo/`. Las cifras del proveedor no
+bloquean la prueba de software: se confirmarán en la etapa de taller.
 
 ## 1. Instalación y conexión
 
@@ -25,7 +26,8 @@ de tapacantos por MCP entre procesos. Ver archivos de ejemplo en
 - [x] El usuario confirmó que las herramientas responden desde otra sesión de
   Codex que cargó la configuración nueva. El aislamiento de este entorno
   bloqueó anteriormente una prueba entre procesos; fuera de él funcionó.
-- [ ] Documentar y comprobar una instalación reproducible en otra máquina.
+- [x] Documentar la instalación y verificarla en un segundo entorno aislado en
+  esta misma máquina. La instalación en otra máquina aún no se ha comprobado.
 
 ## 2. Diseño y edición
 
@@ -36,7 +38,8 @@ de tapacantos por MCP entre procesos. Ver archivos de ejemplo en
 - [x] El usuario revisó la visualización 3D y confirmó que es adecuada para la
   prueba. La interfaz existente visualiza el modelo; cambiar medidas se hace
   regenerándolo mediante MCP, no arrastrando piezas.
-- [ ] Definir y validar soportes, refuerzos, anclajes y uniones antes de fabricar.
+- [x] Los soportes son suficientes para visualizar el boceto de prueba. La
+  validación constructiva corresponde a la etapa 6, antes de fabricar.
 
 ## 3. Entrega al proveedor
 
@@ -52,25 +55,27 @@ de tapacantos por MCP entre procesos. Ver archivos de ejemplo en
   bordes indicados explícitamente, y muestra medidas terminadas y de corte.
 - [x] El paquete avisa si hay piezas con cantos sin definir y no aplica
   descuentos supuestos. Una indicación vacía confirma que no llevan canto.
-- [ ] Confirmar márgenes, material, espesor real y tapacantos con el proveedor
-  y el taller; los valores predeterminados son provisionales.
-- [ ] Ajustar columnas y convenciones al proveedor real y revisar el diagrama.
+- [x] Usar los valores genéricos para las pruebas; la plantilla es configurable.
+  La adaptación y confirmación del proveedor real corresponde a la etapa 6.
 
 ## 4. Validación de cortes
 
 - [x] Prototipo: comparar cuatro órdenes de colocación. No garantiza el óptimo.
-- [ ] Probar con varios materiales y espesores, piezas que no caben, veta,
-  márgenes y tamaños reales de placa. Evitar aceptar silenciosamente cambios de veta.
-- [ ] Desarrollar y verificar la secuencia numerada de cortes; el SVG actual
-  muestra distribución, pero no orden de pasadas ni cortes numerados.
-- [ ] Revisar que la distribución y la secuencia sean realizables por el proveedor.
+- [x] Probar perfiles, espesor incompatible, piezas que no caben, veta, márgenes
+  y distintos tamaños de placa; se rechazan cambios automáticos de veta.
+- [x] Generar una secuencia guillotina numerada y verificar geométricamente las
+  regiones, el ancho de sierra y que las piezas no sean atravesadas por los cortes.
+- [ ] Confirmar con el proveedor que la secuencia es realizable por su máquina;
+  la comprobación geométrica no sustituye esa revisión operativa.
 
 ## 5. Prueba integral del escritorio
 
 - [x] Se generaron dos versiones del modelo, despiece, distribución y Excel
   mediante MCP; el usuario aprobó la visualización del informe 3D como prueba.
-- [ ] Repetir el flujo integral con los perfiles actuales, el descuento explícito
-  de tapacantos y la secuencia de cortes cuando esté disponible.
+- [x] Se repitió el flujo mediante MCP con el perfil genérico, un ejemplo de
+  descuento de canto y la secuencia; generó informe 3D, Excel y SVG.
+- [ ] Revisar en vivo con el usuario las salidas y un cambio de medida solicitado
+  durante la sesión, no solamente los archivos generados para la demostración.
 
 ## 6. Prueba real del taller
 

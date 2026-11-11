@@ -20,7 +20,7 @@ class DefaultSupplierTests(unittest.TestCase):
             self.assertEqual(result["result"]["sheets_needed"], 1)
             self.assertTrue(any("provisional" in w for w in result["result"]["warnings"]))
             workbook = load_workbook(path)
-            self.assertEqual(workbook.sheetnames, ["Despiece", "Placas y avisos", "Diseño y corte"])
+            self.assertEqual(workbook.sheetnames, ["Despiece", "Placas y avisos", "Diseño y corte", "Secuencia cortes"])
             rows = list(workbook["Despiece"].values)
             self.assertEqual(sum(row[2] for row in rows[1:]), 5)
             self.assertEqual(next(row for row in rows[1:] if row[1] == "tapa_principal")[3], 1900)

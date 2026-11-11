@@ -58,7 +58,23 @@ def optimize_profile(parts: list[dict], profile: dict) -> dict:
     margin = profile.get("trim_margin_mm", 0)
     width = profile["sheet_width_mm"]
     height = profile["sheet_height_mm"]
+    if not isinstance(parts, list) or not parts:
+        raise ValueError("Se necesita al menos una pieza")
+    ids = set()
     for part in parts:
+        pid = part.get("id")
+        if not isinstance(pid, str) or not pid or pid in ids:
+            raise ValueError("Los identificadores de pieza deben ser únicos y no vacíos")
+        ids.add(pid)
+        for field in ("width", "height"):
+            value = part.get(field)
+            if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value <= 0:
+                raise ValueError(f"Medida inválida en {pid}: {field}")
+        qty = part.get("qty", 1)
+        if isinstance(qty, bool) or not isinstance(qty, int) or qty <= 0 or qty > 10000:
+            raise ValueError(f"Cantidad inválida en {pid}")
+        if part.get("grain") not in (None, "none", "length", "width"):
+            raise ValueError(f"Veta inválida en {pid}")
         thickness = part.get("thickness")
         if thickness is not None and thickness != profile["thickness_mm"]:
             raise ValueError(f"Piece {part.get('id')} does not match profile thickness")
@@ -69,6 +85,9 @@ def optimize_profile(parts: list[dict], profile: dict) -> dict:
     result["profile"] = profile
     if "error" in result:
         return result
+    if any("grano relajado" in w.lower() for w in result["warnings"]):
+        return {"error": "Una pieza no cabe respetando la dirección de veta; revise las medidas o el perfil.",
+                "warnings": result["warnings"], "profile": profile}
     if profile.get("provisional"):
         result["warnings"].append("Perfil provisional: confirmar placa, espesor, sierra, veta y margen con el proveedor.")
     result["usable_sheet_size_mm"] = result["sheet_size_mm"]

@@ -38,8 +38,11 @@ destino `.xlsx`; usa los valores genéricos si no se indican `profile_id` y
 El paquete es un borrador: hay que confirmar dimensiones de corte, tapacantos,
 veta, sierra y márgenes con el proveedor. Se rechazan materiales mezclados,
 espesores incompatibles y piezas cuya veta solo permite colocarlas si se ignora
-la restricción. Los cortes numerados y la validación de la secuencia para la
-máquina del proveedor quedan pendientes.
+la restricción. El SVG y la hoja `Secuencia cortes` incluyen una secuencia
+guillotina numerada cuando puede verificarse geométricamente: cada corte cruza
+una región existente y respeta el ancho de sierra. Si no se puede demostrar,
+no se genera el paquete. Es una propuesta de prueba; hay que verificarla con
+la máquina, sujeciones y procedimientos del proveedor antes de cortar.
 
 Para `export_supplier_package`, las dimensiones en `spec` son terminadas. El
 opcional `banding_by_part` indica por pieza `largo_inicio`, `largo_fin`,

@@ -9,6 +9,7 @@ from pathlib import Path
 from .supplier_export import export_cutlist_xlsx
 from .supplier_profiles import load_profile, optimize_profile
 from .supplier_templates import load_template
+from .cut_sequence import build_cut_sequence
 
 
 def build_supplier_package(spec: dict, destination: str, profile_id: str = "generico",
@@ -89,7 +90,9 @@ def build_supplier_package(spec: dict, destination: str, profile_id: str = "gene
     if unspecified:
         result["warnings"].append("Tapacantos sin definir para: " + ", ".join(unspecified) + "; no se descontó canto en esas piezas.")
     result["warnings"].append("Las dimensiones del despiece son de corte; confirmar tapacantos y espesores antes de fabricar.")
+    result["warnings"].append("Secuencia geométrica de prueba; verificar con la máquina y el proveedor antes de cortar.")
     result["finished_dimensions_mm"] = finished
+    result["cut_sequence"] = build_cut_sequence(result)
     workbook = Path(destination)
     if workbook.suffix.lower() != ".xlsx":
         raise ValueError("El archivo de destino debe terminar en .xlsx")
@@ -118,5 +121,15 @@ def _svg(result: dict) -> str:
             label = html.escape(str(p["id"]))
             svg.append(f'<rect x="{x}" y="{y}" width="{w}" height="{h}" fill="#b8d8e5" stroke="#333" stroke-width="3"/>')
             svg.append(f'<text x="{x + w/2}" y="{y + h/2}" text-anchor="middle" font-size="{font}">{label}</text>')
+        sequence = next(plan for plan in result["cut_sequence"] if plan["sheet_number"] == sheet["sheet_number"])
+        for cut in sequence["cuts"]:
+            x, y, w, h = cut["region_antes_mm"]
+            center = cut["trayecto_centro_mm"]
+            if cut["eje"] == "x":
+                x1, y1, x2, y2 = center, y+y_offset, center, y+h+y_offset
+            else:
+                x1, y1, x2, y2 = x, center+y_offset, x+w, center+y_offset
+            svg.append(f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="#c62828" stroke-width="5"/>')
+            svg.append(f'<text x="{x1+8}" y="{y1+font}" font-size="{font}" fill="#c62828">{cut["numero"]}</text>')
     svg.append('</svg>')
     return "".join(svg)
